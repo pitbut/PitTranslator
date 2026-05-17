@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PitTranslator</string>
+    <string name="btn_start">СТАРТ</string>
+    <string name="btn_stop">СТОП</string>
+    <string name="ready">Готов</string>
+    <string name="loading_model">Загрузка модели…</string>
+    <string name="listening">Слушаю…</string>
+    <string name="translating">Перевожу…</string>
+    <string name="speaking">Воспроизвожу…</string>
+</resources>

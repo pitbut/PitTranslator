@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- headphones arc -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M28,58 C28,38 37.9,22 54,22 C70.1,22 80,38 80,58"/>
+    <!-- left cup -->
+    <rect android:fillColor="#FFFFFF" android:x="18" android:y="54"
+        android:width="14" android:height="22" android:rx="7"/>
+    <!-- right cup -->
+    <rect android:fillColor="#FFFFFF" android:x="76" android:y="54"
+        android:width="14" android:height="22" android:rx="7"/>
+    <!-- translate arrow -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M40,86 L68,86 M61,80 L68,86 L61,92"/>
+</vector>

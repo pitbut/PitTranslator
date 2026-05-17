@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.pbt.translator'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.pbt.translator"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildFeatures { viewBinding true }
+
+    buildTypes {
+        release { minifyEnabled false }
+        debug   { debuggable true }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+
+    packagingOptions {
+        jniLibs { useLegacyPackaging = true }
+        resources {
+            excludes += ['META-INF/INDEX.LIST',
+                         'META-INF/io.netty.versions.properties']
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    // Vosk offline STT
+    implementation 'com.alphacephei:vosk-android:0.3.47'
+
+    // ML Kit Translation (скачивает языковые модели по WiFi)
+    implementation 'com.google.mlkit:translate:17.0.2'
+
+    // OkHttp для загрузки Vosk-моделей
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
