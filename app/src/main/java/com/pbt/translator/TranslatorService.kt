@@ -1,4 +1,3 @@
-cat > app/src/main/java/com/pbt/translator/TranslatorService.kt << 'EOF'
 package com.pbt.translator
 
 import android.app.*
@@ -247,4 +246,3 @@ class TranslatorService : Service() {
         wakeLock?.acquire(4 * 60 * 60 * 1000L)
     }
 }
-EOF
