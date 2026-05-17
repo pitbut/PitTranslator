@@ -1,3 +1,4 @@
+cat > app/src/main/java/com/pbt/translator/TranslatorService.kt << 'EOF'
 package com.pbt.translator
 
 import android.app.*
@@ -6,6 +7,7 @@ import android.media.*
 import android.os.*
 import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
+import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.*
 import kotlinx.coroutines.*
 import org.vosk.Model
@@ -42,7 +44,6 @@ class TranslatorService : Service() {
     private var listening = false
     private var wakeLock: PowerManager.WakeLock? = null
 
-    // ── Lifecycle ──────────────────────────────────────────────────
     override fun onBind(i: Intent?) = null
 
     override fun onCreate() {
@@ -88,12 +89,10 @@ class TranslatorService : Service() {
         super.onDestroy()
     }
 
-    // ── Init helpers ───────────────────────────────────────────────
     private fun initTTS() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale.forLanguageTag(dstLang)
-                // Route to Bluetooth A2DP — NOT SCO → BT mic stays silent
                 tts?.setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -112,11 +111,9 @@ class TranslatorService : Service() {
             .setTargetLanguage(dst)
             .build()
         translator = Translation.getClient(opts)
-        // Download translation model (any network, no WiFi restriction)
         translator?.downloadModelIfNeeded(DownloadConditions.Builder().build())
     }
 
-    // ── Audio loop ─────────────────────────────────────────────────
     private fun startListening() {
         val minBuf = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
@@ -130,7 +127,6 @@ class TranslatorService : Service() {
             minBuf
         )
 
-        // Prefer far-field (away from user) microphone — API 28+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             audioRec?.setPreferredMicrophoneDirection(
                 MicrophoneDirection.MIC_DIRECTION_AWAY_FROM_USER
@@ -150,17 +146,14 @@ class TranslatorService : Service() {
                 val n = audioRec?.read(buf, 0, buf.size) ?: break
                 if (n <= 0) continue
 
-                // Amplify
                 val amp = ShortArray(n) { i ->
                     (buf[i] * AMPLIFY).toInt()
                         .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
                 }
 
-                // RMS → waveform
                 val rms = sqrt(amp.take(n).fold(0.0) { a, s -> a + s.toDouble() * s }.toDouble() / n).toFloat()
                 sendAmp((rms / 32768f).coerceIn(0f, 1f))
 
-                // Bytes for Vosk
                 val bytes = ByteArray(n * 2).also { b ->
                     for (i in 0 until n) {
                         b[i * 2]     = (amp[i].toInt() and 0xFF).toByte()
@@ -178,7 +171,6 @@ class TranslatorService : Service() {
         }
     }
 
-    // ── Text handling ──────────────────────────────────────────────
     private fun handleRecognized(text: String) {
         broadcast(ACTION_ORIGINAL, "text", text)
         broadcast(ACTION_STATUS, "status", "⚡ Перевожу…")
@@ -204,14 +196,18 @@ class TranslatorService : Service() {
     }
 
     private fun extractText(json: String): String {
-        val start = json.indexOf('"', json.indexOf(""text"") + 7)
-        if (start < 0) return ""
-        val end = json.indexOf('"', start + 1)
-        if (end < 0) return ""
-        return json.substring(start + 1, end).trim()
+        try {
+            val textIndex = json.indexOf("text")
+            if (textIndex < 0) return ""
+            val firstQuote = json.indexOf('"', textIndex + 4)
+            val secondQuote = json.indexOf('"', firstQuote + 1)
+            if (secondQuote < 0) return ""
+            return json.substring(firstQuote + 1, secondQuote)
+        } catch (e: Exception) {
+            return ""
+        }
     }
 
-    // ── Notification ───────────────────────────────────────────────
     private fun createChannel() {
         val ch = NotificationChannel(CHANNEL_ID, "PitTranslator",
             NotificationManager.IMPORTANCE_LOW).apply {
@@ -238,7 +234,6 @@ class TranslatorService : Service() {
     private fun updateNotif(text: String) =
         getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotif(text))
 
-    // ── Helpers ────────────────────────────────────────────────────
     private fun broadcast(action: String, key: String, value: String) =
         sendBroadcast(Intent(action).apply { putExtra(key, value); setPackage(packageName) })
 
@@ -249,6 +244,7 @@ class TranslatorService : Service() {
     private fun acquireWakeLock() {
         val pm = getSystemService(PowerManager::class.java)
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "PitTranslator::mic")
-        wakeLock?.acquire(4 * 60 * 60 * 1000L) // 4 hours max
+        wakeLock?.acquire(4 * 60 * 60 * 1000L)
     }
 }
+EOF
